@@ -3,21 +3,24 @@ const nameGroupAPI = __dirname.split('/').slice(-1)[0];
 const request = require('../../app/modules/request');
 module.exports = (API, redis) => {
 
-    API.register('get_testnet_eth', true,(user, param, callback) => {
-        let option = {
-            rejectUnauthorized: false,
-            host: 'ropsten.faucet.b9lab.com',
-            port: 443,
-            path: '/tap',
-            method: 'POST',
-            formData: '{"toWhom":"'+param.address+'"}',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-        request.getJSON(option, (statusCode, response) => {
-            callback && callback(null, {response:response,statusCode:statusCode,address:param.address});
+    API.register('get_testnet_eth', true, (user, param) => {
+        return new Promise((resolve, reject) => {
+            let option = {
+                rejectUnauthorized: false,
+                host: 'ropsten.faucet.b9lab.com',
+                port: 443,
+                path: '/tap',
+                method: 'POST',
+                formData: '{"toWhom":"' + param.address + '"}',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            request.getJSON(option, (statusCode, response) => {
+                resolve({response: response, statusCode: statusCode, address: param.address});
+            });
         });
+
     }, {
         title: 'Get eth testnet coin ropsten',
         group: nameGroupAPI,

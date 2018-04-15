@@ -25,41 +25,39 @@ const geocoder = NodeGeocoder({
 
 
 module.exports = (API, redis) => {
-    API.register('geoCode', true, (user, param, callback) => {
-        if (!param.address && !param.keyword) {
-            return callback && callback(null, {
-                error: error.api('param.address or param.keyword is not valid', 'param', {}, 0),
-                success: false
-            });
-        }
+    API.register('geoCode', true, (user, param) => {
+        return new Promise((resolve, reject) => {
+            if (!param.address && !param.keyword) {
+                return reject(API.error.create('param.address or param.keyword is not valid', 'param', {}, 0));
+            }
 
-        places.autocomplete({input: param.address || param.keyword}, function (err, response) {
-            let result = [];
-            async.map(response.predictions, function (data, callback) {
-                places.details({reference: data.reference}, function (err, response) {
-                    let coutry = '';
-                    let district = null;
-                    for (let key in response.result.address_components) {
-                        if (response.result.address_components[key].types[0] === 'country')
-                            coutry = response.result.address_components[key].long_name;
-                        if (response.result.address_components[key].types[0] === 'administrative_area_level_1')
-                            district = response.result.address_components[key].long_name;
+            places.autocomplete({input: param.address || param.keyword}, function (err, response) {
+                async.map(response.predictions, function (data, callback) {
+                    places.details({reference: data.reference}, function (err, response) {
+                        let coutry = '';
+                        let district = null;
+                        for (let key in response.result.address_components) {
+                            if (response.result.address_components[key].types[0] === 'country')
+                                coutry = response.result.address_components[key].long_name;
+                            if (response.result.address_components[key].types[0] === 'administrative_area_level_1')
+                                district = response.result.address_components[key].long_name;
 
-                    }
-                    if (response.result.types[0] === 'country' || response.result.types[0] === 'locality') {
-                        callback(null, {city: response.result.name, district: district, coutry: coutry});
-                    } else {
-                        callback()
-                    }
+                        }
+                        if (response.result.types[0] === 'country' || response.result.types[0] === 'locality') {
+                            callback(null, {city: response.result.name, district: district, coutry: coutry});
+                        } else {
+                            callback()
+                        }
+                    });
+                }, function (err, results) {
+                    let scan_res = results.filter(function (item) {
+                        if (item) return true;
+                        return false;
+                    });
+                    resolve({results: scan_res, success: true});
                 });
-            }, function (err, results) {
-                let scan_res = results.filter(function (item) {
-                    if (item) return true;
-                    return false;
-                });
-                callback && callback(null, {results: scan_res, success: true});
-            });
 
+            });
         });
     }, {
         title: 'Get geo code to find',
@@ -69,97 +67,92 @@ module.exports = (API, redis) => {
         param: [{name: 'address', type: "string", title: 'address string ', default: ''}],
         response: []
     });
-    API.register('GetRooms', true, (user, param, callback) => {
-        let findPram = {};
-        if (param.find && typeof param.find === 'object') findPram = param.find;
-        try {
-            if (findPram._id) findPram._id = db.mongoose.Types.ObjectId(findPram._id);
-        } catch (e) {
-            return callback && callback(null, {
-                error: error.api('param.find._id is not valid', 'param', e, 0),
-                success: false
-            });
-        }
-        let skip = 0;
-        let limit = 30;
-        if (param.count_page && !isNaN(param.count_page) && +param.count_page > 0) {
-            limit = param.count_page;
-        }
-        if (param.page && !isNaN(param.page) && +param.page > 0) {
-            skip = limit * (param.page - 1)
-        }
-        console.log(findPram);
-        async.parallel({
-            count: function (count_callback) {
-                db.rooms.count(findPram).then(function (count) {
-                    return count_callback && count_callback(null, {
-                        room: count,
-                        page: Math.ceil(+(count / limit).toFixed(5)),
-                        skip: skip,
-                        limit: limit
-                    });
-                }).catch(function (err) {
-                    return count_callback && count_callback({
-                        error: error.api(err.message, 'db', err, 6),
-                        success: false
-                    });
-                });
-            },
-            rooms: function (callback) {
-                db.rooms.find(findPram).skip(skip).limit(limit).then(function (documents) {
-
-                    async.reduce(documents, {}, function (obj, room, cb) {
-                        db.scheduleRoom.find({
-                            room: db.mongoose.Types.ObjectId(room._id),
-                            // "tx.status": 1
-                        }).then(function (schedules) {
-                            obj[room._id] = schedules;
-                            cb(null, obj)
-                        }).catch(function (err) {
-                            return callback && callback(null, {
-                                error: error.api(err.message, 'db', err, 5),
-                                success: false
-                            });
-
-                        });
-                    }, function (err, res) {
-                        if (err)
-                            return callback && callback(null, {
-                                error: error.api('scheduleRoom get error', 'async', err, 5),
-                                success: false
-                            });
-                        let all = documents.map(function (roomOne) {
-                            if (!res[roomOne._doc._id]) roomOne._doc.dateRanges = [];
-                            if (res[roomOne._doc._id]) roomOne._doc.dateRanges = res[roomOne._doc._id];
-                            return roomOne._doc;
-                        });
-                        return callback && callback(null, {
-                            rooms: all,
-                            success: true
-                        });
-                    });
-
-                }).catch(function (err) {
-
-                    return callback && callback({
-                        error: error.api(err.message, 'db', err, 5),
-                        success: false
-                    });
-
-                });
+    API.register('GetRooms', true, (user, param) => {
+        return new Promise((resolve, reject) => {
+            let findPram = {};
+            if (param.find && typeof param.find === 'object') findPram = param.find;
+            try {
+                if (findPram._id) findPram._id = db.mongoose.Types.ObjectId(findPram._id);
+            } catch (e) {
+                return reject(API.error.create('param.find._id is not valid', 'param', e, 0));
             }
-        }, function (err, res) {
-            if (err) {
-                return callback && callback(null, {
-                    error: error.api(err.message, 'db', err, 5),
-                    success: false
-                });
-
+            let skip = 0;
+            let limit = 30;
+            if (param.count_page && !isNaN(param.count_page) && +param.count_page > 0) {
+                limit = param.count_page;
             }
-            return callback && callback(null, {
-                rooms: res.rooms.rooms,
-                count: res.count,
-                success: true
+            if (param.page && !isNaN(param.page) && +param.page > 0) {
+                skip = limit * (param.page - 1)
+            }
+            async.parallel({
+                count: function (count_callback) {
+                    db.rooms.count(findPram).then(function (count) {
+                        return count_callback && count_callback(null, {
+                            room: count,
+                            page: Math.ceil(+(count / limit).toFixed(5)),
+                            skip: skip,
+                            limit: limit
+                        });
+                    }).catch(function (err) {
+                        return count_callback && count_callback({
+                            error: error.api(err.message, 'db', err, 6),
+                            success: false
+                        });
+                    });
+                },
+                rooms: function (callback) {
+                    db.rooms.find(findPram).skip(skip).limit(limit).then(function (documents) {
+
+                        async.reduce(documents, {}, function (obj, room, cb) {
+                            db.scheduleRoom.find({
+                                room: db.mongoose.Types.ObjectId(room._id),
+                                // "tx.status": 1
+                            }).then(function (schedules) {
+                                obj[room._id] = schedules;
+                                cb(null, obj)
+                            }).catch(function (err) {
+                                return callback && callback(null, {
+                                    error: error.api(err.message, 'db', err, 5),
+                                    success: false
+                                });
+
+                            });
+                        }, function (err, res) {
+                            if (err)
+                                return callback && callback(null, {
+                                    error: error.api('scheduleRoom get error', 'async', err, 5),
+                                    success: false
+                                });
+                            let all = documents.map(function (roomOne) {
+                                if (!res[roomOne._doc._id]) roomOne._doc.dateRanges = [];
+                                if (res[roomOne._doc._id]) roomOne._doc.dateRanges = res[roomOne._doc._id];
+                                return roomOne._doc;
+                            });
+                            return callback && callback(null, {
+                                rooms: all,
+                                success: true
+                            });
+                        });
+
+                    }).catch(function (err) {
+
+                        return callback && callback({
+                            error: error.api(err.message, 'db', err, 5),
+                            success: false
+                        });
+
+                    });
+                }
+            }, function (err, res) {
+                if (err) {
+                    return reject(API.error.create(err.message, 'db', err, 5));
+
+                }
+                return resolve({
+                    rooms: res.rooms.rooms,
+                    count: res.count,
+                    success: true
+                });
             });
         });
 
@@ -173,322 +166,281 @@ module.exports = (API, redis) => {
         response: []
     });
     API.register('UpsertRoom', (user, param, callback) => {
-        if (param.dateRanges && typeof param.dateRanges !== 'string' && typeof param.dateRanges !== 'object') {
-            return callback && callback(null, {
-                error: error.api('Request param "dateRanges" incorrect', 'param', {
+        return new Promise((resolve, reject) => {
+            if (param.dateRanges && typeof param.dateRanges !== 'string' && typeof param.dateRanges !== 'object') {
+                return reject(API.error.create('Request param "dateRanges" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#1',
                     param: param
-                }, 0),
+                }, 0));
+            }
 
-                success: false
-            });
-        }
-
-        if (param.photo && typeof param.photo !== 'string' && typeof param.photo !== 'object') {
-            return callback && callback(null, {
-                error: error.api('Request param "photo" incorrect', 'param', {
+            if (param.photo && typeof param.photo !== 'string' && typeof param.photo !== 'object') {
+                return reject(API.error.create('Request param "photo" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#2',
                     param: param
-                }, 0),
-
-                success: false
-            });
-        }
-        if (param.title && typeof param.title !== 'string') {
-            return callback && callback(null, {
-                error: error.api('Request param "title" incorrect', 'param', {
+                }, 0));
+            }
+            if (param.title && typeof param.title !== 'string') {
+                return reject(API.error.create('Request param "title" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#3',
                     param: param
-                }, 0),
+                }, 0));
+            }
 
-                success: false
-            });
-        }
-
-        if (param.description && typeof param.description !== 'string') {
-            return callback && callback(null, {
-                error: error.api('Request param "description" incorrect', 'param', {
+            if (param.description && typeof param.description !== 'string') {
+                return reject(API.error.create('Request param "description" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#4',
                     param: param
-                }, 0),
+                }, 0));
+            }
 
-                success: false
-            });
-        }
-
-        if (param.address_country && typeof param.address_country !== 'string') {
-            return callback && callback(null, {
-                error: error.api('Request param "address_country" incorrect', 'param', {
+            if (param.address_country && typeof param.address_country !== 'string') {
+                return reject(API.error.create('Request param "address_country" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#5',
                     param: param
-                }, 0),
-
-                success: false
-            });
-        }
-        if (param.address_country && typeof param.address_country !== 'string') {
-            return callback && callback(null, {
-                error: error.api('Request param "address_country" incorrect', 'param', {
+                }, 0));
+            }
+            if (param.address_country && typeof param.address_country !== 'string') {
+                return reject(API.error.create('Request param "address_country" incorrect', 'param', {
                     pos: 'api/rooms.js(UpsertRoom):#6',
                     param: param
-                }, 0),
-
-                success: false
-            });
-        }
-        if (!param.facilities) param.facilities = [];
-        try {
-            if (param.dateRanges && typeof param.dateRanges === 'string')
-                param.dateRanges = JSON.parse(param.dateRanges);
-            if (param.photo && typeof param.photo === 'string')
-                param.photo = JSON.parse(param.photo);
-            if (param.facilities && typeof param.facilities === 'string')
-                param.facilities = JSON.parse(param.facilities);
-
-        } catch (e) {
-            return callback && callback(null, {
-                error: error.api('Error parse param dateRanges or photo or facilities not array', 'param', e, 0),
-                success: false
-            });
-        }
-
-        if (param.dateRanges) {
-            for (let i in param.dateRanges) {
-                param.dateRanges[i].txHash = null;
-                param.dateRanges[i].txStatus = 1;
+                }, 0));
             }
-        }
+            if (!param.facilities) param.facilities = [];
+            try {
+                if (param.dateRanges && typeof param.dateRanges === 'string')
+                    param.dateRanges = JSON.parse(param.dateRanges);
+                if (param.photo && typeof param.photo === 'string')
+                    param.photo = JSON.parse(param.photo);
+                if (param.facilities && typeof param.facilities === 'string')
+                    param.facilities = JSON.parse(param.facilities);
 
-        if (!param._id && !param._index) {
-            geocoder.geocode(param.address_country + ',' + param.address_state + ',' + param.address_city + ',' + param.address_address).then(function (res) {
+            } catch (e) {
+                return reject(API.error.create('Error parse param dateRanges or photo or facilities not array', 'param', e, 0));
+            }
 
-                new db.rooms({
+            if (param.dateRanges) {
+                for (let i in param.dateRanges) {
+                    param.dateRanges[i].txHash = null;
+                    param.dateRanges[i].txStatus = 1;
+                }
+            }
 
-                    user: db.mongoose.Types.ObjectId(user._id),
-                    title: param.title,
-                    description: param.description,
-                    photo: param.photo,
-                    wallet: param.wallet,
-                    bathroom: param.bathroom,
-                    bathroom_count: param.bathroom_count,
-                    bed_count: param.bed_count,
-                    bedroom_count: param.bedroom_count,
-                    children_count: param.children_count,
-                    limit_time_min: param.limit_time_min,
-                    limit_time_max: param.limit_time_max,
-                    people_count: param.people_count,
-                    startTimeCheckIn: param.startTimeCheckIn,
-                    startTimeCheckOut: param.startTimeCheckOut,
-                    endTimeCheckIn: param.endTimeCheckIn,
-                    endTimeCheckOut: param.endTimeCheckOut,
-                    // dateRanges: param.dateRanges,
-                    address: {
-                        country: res[0].country,
-                        state: res[0].administrativeLevels.level1long || res[0].extra.neighborhood,
-                        city: res[0].city || res[0].extra.neighborhood,
-                        street: res[0].streetName,
-                        address: param.address_address,
-                        index: res[0].zipcode || param.address_index,
-                    },
-                    facilities: param.facilities,
-                    location: [param.location_latitude * 1, param.location_longitude * 1],
-                    txHash: null,
-                    status: param.status //0 - draft , 1 - wait confirm, 2 - send to blockchain, 3 -success public
-                }).save().then(function (document) {
+            if (!param._id && !param._index) {
+                geocoder.geocode(param.address_country + ',' + param.address_state + ',' + param.address_city + ',' + param.address_address).then(function (res) {
 
-                    for (let i in  param.dateRanges) {
+                    new db.rooms({
 
+                        user: db.mongoose.Types.ObjectId(user._id),
+                        title: param.title,
+                        description: param.description,
+                        photo: param.photo,
+                        wallet: param.wallet,
+                        bathroom: param.bathroom,
+                        bathroom_count: param.bathroom_count,
+                        bed_count: param.bed_count,
+                        bedroom_count: param.bedroom_count,
+                        children_count: param.children_count,
+                        limit_time_min: param.limit_time_min,
+                        limit_time_max: param.limit_time_max,
+                        people_count: param.people_count,
+                        startTimeCheckIn: param.startTimeCheckIn,
+                        startTimeCheckOut: param.startTimeCheckOut,
+                        endTimeCheckIn: param.endTimeCheckIn,
+                        endTimeCheckOut: param.endTimeCheckOut,
+                        // dateRanges: param.dateRanges,
+                        address: {
+                            country: res[0].country,
+                            state: res[0].administrativeLevels.level1long || res[0].extra.neighborhood,
+                            city: res[0].city || res[0].extra.neighborhood,
+                            street: res[0].streetName,
+                            address: param.address_address,
+                            index: res[0].zipcode || param.address_index,
+                        },
+                        facilities: param.facilities,
+                        location: [param.location_latitude * 1, param.location_longitude * 1],
+                        txHash: null,
+                        status: param.status //0 - draft , 1 - wait confirm, 2 - send to blockchain, 3 -success public
+                    }).save().then(function (document) {
 
-                        new db.scheduleRoom({
-                            room: db.mongoose.Types.ObjectId(document._doc._id),
-                            _scheduleIndex: null,
-                            startDate: moment.utc(param.dateRanges[i].startDate, 'DD.MM.YY').toDate(),
-                            endDate: moment.utc(param.dateRanges[i].endDate, 'DD.MM.YY').toDate(),
-                            dayPrice: +(+param.dateRanges[i].priceDay).toFixed(8),
-                            weekPrice: +(param.dateRanges[i].priceDay - (param.dateRanges[i].priceDay * param.dateRanges[i].discountWeek / 100)).toFixed(8),
-                            monthPrice: +(param.dateRanges[i].priceDay - (param.dateRanges[i].priceDay * param.dateRanges[i].discountMonth / 100)).toFixed(8),
-                            discountWeek: 1 * (1 * param.dateRanges[i].discountWeek).toFixed(8),
-                            discountMonth: 1 * (1 * param.dateRanges[i].discountMonth).toFixed(8),
-                            intervalDate: null,
-                            tx: {
-                                status: 1,
-                                hash: null,
-                            }
-                        }).save();
-
-                    }
-                    // bathroom
-                    // bathroom_count
-                    // bed_count
-                    // bedroom_count
-                    // children_count
-                    // dateRanges
-                    // endTimeCheckIn
-                    // endTimeCheckOut
-                    // facilities
-                    // limit_time_max
-                    // limit_time_min
-                    // people_count
-                    // startTimeCheckIn
-                    // startTimeCheckOut
-                    return callback && callback(null, {
-                        room: filterObject(document._doc, [
-                            '_id',
-                            '_index',
-                            '_hash',
-                            'bathroom',
-                            'bathroom_count',
-                            'bed_count',
-                            'bedroom_count',
-                            'children_count',
-                            'endTimeCheckIn',
-                            'endTimeCheckOut',
-                            'startTimeCheckIn',
-                            'startTimeCheckOut',
-                            'facilities',
-                            'people_count',
-                            'limit_time_min',
-                            'limit_time_max',
-                            'title',
-                            'description',
-                            'photo',
-                            'wallet',
-                            'dateRanges',
-                            'address',
-                            'location',
-                            'status',
-                            'update_at',
-                        ]),
-                        success: true
-                    });
-                }).catch(function (err) {
-                    return callback && callback(null, {
-                        error: error.api(err.message, 'db', err, 5),
-                        success: false
-                    });
-
-                });
-            }).catch(function (err) {
-                return callback && callback(null, {
-                    error: error.api('Error geo data', 'param', err, 0),
-                    success: false
-                });
-            });
-        } else {
+                        for (let i in  param.dateRanges) {
 
 
-            if (param._id && typeof param._id === 'string') {
-                db.rooms.findOne({_id: db.mongoose.Types.ObjectId(param._id)}).then(function (document) {
-                    if (!document) {
-                        return callback && callback(null, {
-                            error: error.api('room not found', 'param', {pos: 'rooms.js#10'}, 0),
+                            new db.scheduleRoom({
+                                room: db.mongoose.Types.ObjectId(document._doc._id),
+                                _scheduleIndex: null,
+                                startDate: moment.utc(param.dateRanges[i].startDate, 'DD.MM.YY').toDate(),
+                                endDate: moment.utc(param.dateRanges[i].endDate, 'DD.MM.YY').toDate(),
+                                dayPrice: +(+param.dateRanges[i].priceDay).toFixed(8),
+                                weekPrice: +(param.dateRanges[i].priceDay - (param.dateRanges[i].priceDay * param.dateRanges[i].discountWeek / 100)).toFixed(8),
+                                monthPrice: +(param.dateRanges[i].priceDay - (param.dateRanges[i].priceDay * param.dateRanges[i].discountMonth / 100)).toFixed(8),
+                                discountWeek: 1 * (1 * param.dateRanges[i].discountWeek).toFixed(8),
+                                discountMonth: 1 * (1 * param.dateRanges[i].discountMonth).toFixed(8),
+                                intervalDate: null,
+                                tx: {
+                                    status: 1,
+                                    hash: null,
+                                }
+                            }).save();
+
+                        }
+                        // bathroom
+                        // bathroom_count
+                        // bed_count
+                        // bedroom_count
+                        // children_count
+                        // dateRanges
+                        // endTimeCheckIn
+                        // endTimeCheckOut
+                        // facilities
+                        // limit_time_max
+                        // limit_time_min
+                        // people_count
+                        // startTimeCheckIn
+                        // startTimeCheckOut
+                        return resolve({
+                            room: filterObject(document._doc, [
+                                '_id',
+                                '_index',
+                                '_hash',
+                                'bathroom',
+                                'bathroom_count',
+                                'bed_count',
+                                'bedroom_count',
+                                'children_count',
+                                'endTimeCheckIn',
+                                'endTimeCheckOut',
+                                'startTimeCheckIn',
+                                'startTimeCheckOut',
+                                'facilities',
+                                'people_count',
+                                'limit_time_min',
+                                'limit_time_max',
+                                'title',
+                                'description',
+                                'photo',
+                                'wallet',
+                                'dateRanges',
+                                'address',
+                                'location',
+                                'status',
+                                'update_at',
+                            ]),
                             success: true
                         });
-                    }
-                    if (param.status && +param.status === 2) {
-                        let _document = filterObject(document._doc, [
-                            '_id',
-                            'title',
-                            'bathroom',
-                            'bathroom_count',
-                            'bed_count',
-                            'bedroom_count',
-                            'children_count',
-                            'endTimeCheckIn',
-                            'endTimeCheckOut',
-                            'startTimeCheckIn',
-                            'startTimeCheckOut',
-                            'facilities',
-                            'people_count',
-                            'limit_time_min',
-                            'limit_time_max',
-                            'description',
-                            'photo',
-                            'wallet',
-                            'address',
-                            'location',
-                            'update_at',
-                        ]);
-                        let _hash = '0x' + crypto.createHash('sha1').update(JSON.stringify(_document)).digest('hex');
-                        aws.upload_json(_hash + '.json', _document, function () {
-                            API.emit('requestFunctionContract', user, {
-                                from: document.wallet,
-                                function: 'UpsertRoomFromHost',
-                                param: "999999999," + _hash + ",0x0,0,1,0"
-                            }, function (err, res) {
-                                if (res.success === false) {
-                                    return callback && callback(null, res);
-                                }
-                                db.rooms.findOneAndUpdate({_id: db.mongoose.Types.ObjectId(param._id)}, {
-                                    txHash: res.result.tx.hash,
-                                    tx: db.mongoose.Types.ObjectId(res.result._id),
-                                    _hash: _hash,
-                                    status: 2
-                                }, {new: true}).then(function (document) {
-                                    return callback && callback(null, {
-                                        room: filterObject(document._doc, [
-                                            '_id',
-                                            '_index',
-                                            '_hash',
-                                            'title',
-                                            'bathroom',
-                                            'bathroom_count',
-                                            'bed_count',
-                                            'bedroom_count',
-                                            'children_count',
-                                            'endTimeCheckIn',
-                                            'endTimeCheckOut',
-                                            'startTimeCheckIn',
-                                            'startTimeCheckOut',
-                                            'facilities',
-                                            'people_count',
-                                            'limit_time_min',
-                                            'limit_time_max',
-                                            'description',
-                                            'photo',
-                                            'wallet',
-                                            'dateRanges',
-                                            'address',
-                                            'location',
-                                            'status',
-                                            'txHash',
-                                            'update_at',
-                                        ]),
-                                        document: document,
-                                        success: true
-                                    });
-                                }).catch(function (err) {
-                                    return callback && callback(null, {
-                                        error: error.api(err.message, 'db', err, 5),
-                                        success: false
+                    }).catch(function (err) {
+                        return reject(API.error.create(err.message, 'db', err, 5));
+
+                    });
+                }).catch(function (err) {
+                    return reject(API.error.create('Error geo data', 'param', err, 0));
+                });
+            } else {
+
+
+                if (param._id && typeof param._id === 'string') {
+                    db.rooms.findOne({_id: db.mongoose.Types.ObjectId(param._id)})
+                        .then((document) => {
+                            if (!document) {
+                                return reject(API.error.create('room not found', 'param', {pos: 'rooms.js#10'}, 0));
+                            }
+                            if (param.status && +param.status === 2) {
+                                let _document = filterObject(document._doc, [
+                                    '_id',
+                                    'title',
+                                    'bathroom',
+                                    'bathroom_count',
+                                    'bed_count',
+                                    'bedroom_count',
+                                    'children_count',
+                                    'endTimeCheckIn',
+                                    'endTimeCheckOut',
+                                    'startTimeCheckIn',
+                                    'startTimeCheckOut',
+                                    'facilities',
+                                    'people_count',
+                                    'limit_time_min',
+                                    'limit_time_max',
+                                    'description',
+                                    'photo',
+                                    'wallet',
+                                    'address',
+                                    'location',
+                                    'update_at',
+                                ]);
+                                let _hash = '0x' + crypto.createHash('sha1').update(JSON.stringify(_document)).digest('hex');
+                                aws.upload_json(_hash + '.json', _document, function () {
+                                    API.call('requestFunctionContract', user, {
+                                        from: document.wallet,
+                                        function: 'UpsertRoomFromHost',
+                                        param: "999999999," + _hash + ",0x0,0,1,0"
+                                    }).then((res) => {
+                                        if (res.success === false) {
+                                            return reject(res);
+                                        }
+                                        db.rooms.findOneAndUpdate({_id: db.mongoose.Types.ObjectId(param._id)}, {
+                                            txHash: res.result.tx.hash,
+                                            tx: db.mongoose.Types.ObjectId(res.result._id),
+                                            _hash: _hash,
+                                            status: 2
+                                        }, {new: true}).then(function (document) {
+                                            return resolve({
+                                                room: filterObject(document._doc, [
+                                                    '_id',
+                                                    '_index',
+                                                    '_hash',
+                                                    'title',
+                                                    'bathroom',
+                                                    'bathroom_count',
+                                                    'bed_count',
+                                                    'bedroom_count',
+                                                    'children_count',
+                                                    'endTimeCheckIn',
+                                                    'endTimeCheckOut',
+                                                    'startTimeCheckIn',
+                                                    'startTimeCheckOut',
+                                                    'facilities',
+                                                    'people_count',
+                                                    'limit_time_min',
+                                                    'limit_time_max',
+                                                    'description',
+                                                    'photo',
+                                                    'wallet',
+                                                    'dateRanges',
+                                                    'address',
+                                                    'location',
+                                                    'status',
+                                                    'txHash',
+                                                    'update_at',
+                                                ]),
+                                                document: document,
+                                                success: true
+                                            });
+                                        }).catch(function (err) {
+                                            return reject(API.error.create(err.message, 'db', err, 5));
+                                        });
                                     });
                                 });
-                            });
+                            } else
+                                return resolve({
+                                    room: document,
+                                    success: true
+                                });
+
+
+                        })
+                        .catch(function (err) {
+                            return reject(API.error.create(err.message, 'db', err, 5));
                         });
-                    } else
-                        return callback && callback(null, {
-                            room: document,
-                            success: true
-                        });
+
+                }
 
 
-                }).catch(function (err) {
-                    return callback && callback(null, {
-                        error: error.api(err.message, 'db', err, 5),
-                        success: false
-                    });
-                });
-
+                if (param._index && typeof param._index === 'string') {
+                    return reject(API.error.create('api in develoment', 'server', {pos: 'rooms.js#11'}, 0));
+                }
             }
-
-
-            if (param._index && typeof param._index === 'string') {
-                return callback && callback(null, {
-                    error: error.api('api in develoment', 'server', {pos: 'rooms.js#11'}, 0),
-                    success: true
-                });
-            }
-        }
+        });
     }, {
         title: 'Create or update Room',
         group: nameGroupAPI,
@@ -561,34 +513,34 @@ module.exports = (API, redis) => {
         ]
     });
 
-    API.register('Booking', (user, param, callback) => {
-        let findPram = {};
-        if (param._id) findPram._id = param._id;
-        if (param._roomIndex) findPram._index = param._roomIndex;
+    API.register('Booking', (user, param) => {
+        return new Promise((resolve, reject) => {
+            let findPram = {};
 
-        if (findPram._id) findPram._id = db.mongoose.Types.ObjectId(findPram._id);
+            if (param._id) findPram._id = param._id;
+            if (param._roomIndex) findPram._index = param._roomIndex;
 
-        try {
-        } catch (e) {
-            return callback && callback(null, {
-                error: error.api('param.find._id is not valid', 'param', e, 0),
-                success: false
-            });
-        }
-        return db.rooms.findOne(findPram).then((room) => {
-            return API.call('requestFunctionContract', user, {
-                from: room.wallet,
-                function: 'Booking',
-                param: room.wallet + "," + room._index + "," + param._from + "," + param._to
-            }).then(res => {
 
-                return callback && callback(null, {
-                    room: room,
-                    tx: res.data,
-                    success: true
+            try {
+                if (findPram._id) findPram._id = db.mongoose.Types.ObjectId(findPram._id);
+            } catch (e) {
+                return reject(API.error.create('param.find._id is not valid', 'param', e, 0));
+            }
+            return db.rooms.findOne(findPram).then((room) => {
+                return API.call('requestFunctionContract', user, {
+                    from: room.wallet,
+                    function: 'Booking',
+                    param: room.wallet + "," + room._index + "," + param._from + "," + param._to
+                }).then(res => {
+
+                    return resolve({
+                        room: room,
+                        tx: res.data,
+                        success: true
+                    });
                 });
-            });
 
+            });
         });
 
     }, {
