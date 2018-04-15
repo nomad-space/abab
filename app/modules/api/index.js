@@ -136,21 +136,5 @@ API = {
     },
     cache: {}
 };
-var chokidar = require('chokidar');
-
-fs.readdir('./app/api', function (err, items) {
-    for (var i = 0; i < items.length; i++) {
-        console.log("API start:"+items[i]);
-        require('../../api/' + items[i])(API, redis);
-    }
-});
-// chokidar.watch(_path_root + 'app/api/*', {
-//     persistent: true
-// }).on('change', function (path) {
-//     console.log("API update:"+path.split('/app/api/')[1]);
-//
-//     require(path)(API, redis);
-//
-// });
 module.exports.controller = controller;
 module.exports.API = API;

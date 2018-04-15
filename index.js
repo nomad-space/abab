@@ -17,11 +17,9 @@ global.filterObject = function (obj,filterArr) {
     return result;
 };
 
-db.open.then(function () {
     console.log('\n*******************************************************');
     console.info('Abab.io Server started.\n\t' + os.cpus()[0].model + ' x' + os.cpus().length + '\n\tProcess pid:' + process.pid + '\n\tPlatform OS:' + process.platform + '\n\tNodeJS version: ' + process.version + '' + '\n\tHTTP port: ' + config.get('server:http:port') + '\n\tMongoDB: ' + 'Connected.' + '');
     console.log('*******************************************************\n\n');
 
 
     const express = require('./app/modules/express');
-});

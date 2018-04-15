@@ -1,3 +1,8 @@
+// deprecated version
+// deprecated version
+// deprecated version
+// deprecated version
+
 /**
  * Created by bogdanmedvedev on 30.06.16.
  */
@@ -16,7 +21,10 @@ function apiResponse(req, res, json) {
     json.server_latency_ms = (new Date()).getTime() - req.initTimestamp;
     res.json(json);
 }
-const error = require('../error/api');
+const error = function (message,type,stack,level,pos) {
+    // deprecated version
+    return {message:message,error_type:type,object:stack,level:level,stack:(new Error()).stack}
+};
 
 var multer = require('multer');
 var s3 = require('../aws-amazon-s3');

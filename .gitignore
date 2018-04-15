@@ -4,3 +4,7 @@ node_modules/
 package-lock.json
 TestAddressKey.txt
 contracts/build/
+
+yarn.lock
+/_docs/insomnia.json
+/_docs/postman.postman_collection

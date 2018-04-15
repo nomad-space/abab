@@ -1,11 +1,9 @@
 /**
- * Created by bogdanmedvedev on 26.06.16.
+ * Created by bogdanmedvedev on 11.01.18.
  */
 'use strict';
 
-var util = require('util');
-var log = require('../log');
-var config = require('../config');
+const log = require('../log');
 
 function PropertyError(message, stopServer) {
     this.name = "Application Error";

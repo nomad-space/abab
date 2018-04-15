@@ -54,6 +54,7 @@ function jsonToUrl(json) {
     for (var key in json) paramURL += "&" + key + "=" + json[key];
     return paramURL.replace('&', "?");
 }
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -67,6 +68,7 @@ function Emit(json) {
         console.warn('[WSS] EMIT No valid JSON:,', e, '\n\t', json);
     }
 }
+
 function API(method, param, _public, cb, reset_cb) {
     if (!method || typeof method != 'string' || method == '')
         return console.error('[API] error emit ,', method, param, _public);
@@ -101,19 +103,21 @@ function API(method, param, _public, cb, reset_cb) {
         }
     } else {
         var auth__ = '';
-        if(ABAB.auth_action.user){
-            auth__ = '&api_key='+ABAB.auth_action.user.api.key;
+        if (ABAB.auth_action.user) {
+            auth__ = '&api_key=' + ABAB.auth_action.user.api.key;
         }
-        if(_public) method = 'public_'+method;
+        if (_public) method = 'public_' + method;
         $.ajax({
-            url: "/api/v1/?method="+method+""+auth__,
+            url: "/api/v1/?method=" + method + "" + auth__,
             type: "get", //send it through get method
             data: param,
             success: function (response) {
-                if(response && typeof response === 'string')  response = JSON.parse(response);
-                if(!response) response= {};
-
-                cb && cb(response)
+                if (response && typeof response === 'string') response = JSON.parse(response);
+                if (!response) response = {};
+                if (response.success)
+                    cb && cb(response.data);
+                if (response.error)
+                    cb && cb(response)
             },
             error: function (xhr) {
                 console.error('[API] Error $.ajax:', xhr)
@@ -123,8 +127,8 @@ function API(method, param, _public, cb, reset_cb) {
 
     }
 }
-function updatePlugins() {
 
+function updatePlugins() {
 
 
     $(document).on("click.bs.dropdown.data-api", ".noclose", function (e) {
@@ -155,7 +159,7 @@ function updatePlugins() {
             changeYear: true,
 
             beforeShowDay: function (date) {
-                return [true, ( (date.getTime() >= Math.min(prv2, cur2) && date.getTime() <= Math.max(prv2, cur2)) ? 'date-range-selected' : '')];
+                return [true, ((date.getTime() >= Math.min(prv2, cur2) && date.getTime() <= Math.max(prv2, cur2)) ? 'date-range-selected' : '')];
             },
             onSelect: function (dateText, inst) {
                 var d1, d2;
@@ -236,16 +240,18 @@ function updatePlugins() {
 
     });
 }
+
 function initMap() {
     console.log('[google maps] init;');
     ABAB.map.fn(true);
-    ABAB.map.init=true;
+    ABAB.map.init = true;
 
 
 }
+
 var ABAB = {
-    map:{
-        init:false,
+    map: {
+        init: false,
         cb_function_arr: [],
         call_wait_auth: function (fn) {
             if (!ABAB.map.init) {
@@ -254,15 +260,15 @@ var ABAB = {
                 fn();
             }
         },
-        fn:function(){
-            for(var i_f in ABAB.map.cb_function_arr) ABAB.map.cb_function_arr[i_f]();
+        fn: function () {
+            for (var i_f in ABAB.map.cb_function_arr) ABAB.map.cb_function_arr[i_f]();
         }
     },
     event: {},
     page: null,
     pageObj: {
-        tab_page:null,
-        page:null,
+        tab_page: null,
+        page: null,
     },
     on: function (event, fn) {
         ABAB.event[event] = fn;
@@ -283,7 +289,7 @@ var ABAB = {
         ABAB.pageObj.page = page;
         ABAB.pageObj.tab_page = tabPage;
         ractiveComponent.rootApp.set('pageActive', 'contentApplication');
-        console.log('Start page:',page);
+        console.log('Start page:', page);
         if ('Rooms' === page) {
             if (!tabPage) tabPage = 'all';
             requireElement({name: 'Rooms', ver: '1.1.0', element: '#content_block'}, {
@@ -298,7 +304,7 @@ var ABAB = {
                     }
                 }
             });
-        }else if('Create' === page && tabPage === 'Room'){
+        } else if ('Create' === page && tabPage === 'Room') {
             requireElement({name: 'AddRoom', ver: '1.1.0', element: '#content_block'}, {
                 cnt: 0,
                 afterlast: function (name) {
@@ -311,7 +317,7 @@ var ABAB = {
                     }
                 }
             });
-        }else{
+        } else {
 
             requireElement({name: page, ver: '1.1.0', element: '#content_block'}, {
                 cnt: 0,
@@ -327,7 +333,7 @@ var ABAB = {
                 }
             });
         }
-        setTimeout(updatePlugins,100);
+        setTimeout(updatePlugins, 100);
         if (!historyAdd)
             history.pushState({}, "ABAB.io | " + page, "#" + page + '-' + tabPage);
         ractiveComponent['rootApp'].set('page', page);
@@ -363,7 +369,7 @@ var ABAB = {
 
         if (data.success && data.success === true) {
             ABAB.auth_action.user = data.user;
-            ractiveComponent['rootApp'].set('user',ABAB.auth_action.user );
+            ractiveComponent['rootApp'].set('user', ABAB.auth_action.user);
             ABAB.auth_action.auth_emit();
         } else {
 
@@ -478,6 +484,7 @@ function start() {
         console.log("[WSS] Error " + error.message);
     };
 }
+
 // start();
 
 if (config_lang[localStorage.getItem('lang')])

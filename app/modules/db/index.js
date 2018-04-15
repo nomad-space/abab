@@ -15,6 +15,10 @@ var schemas = {
             type: Number,
             index: true
         },
+        request_id: {
+            type: String,
+            default: null
+        },
         method: {
             type: String,
             default: null

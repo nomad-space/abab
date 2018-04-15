@@ -27,20 +27,20 @@ function reloadConfig() {
 
 }
 reloadConfig();
-var chokidar = require('chokidar');
-var watcher = chokidar.watch(_path_root + 'config.json', {
-    ignored: /[\/\\]\./,
-    persistent: true
-});
-watcher
-    .on('add', function () {
-        if (model.get('server:server:logs:config')) log.info('[config watcher] .on("add")');
-        reloadConfig();
-    })
-    .on('change', function () {
-        if (model.get('server:server:logs:config')) log.info('[config watcher] .on("change")');
-        reloadConfig();
-    });
+// var chokidar = require('chokidar');
+// var watcher = chokidar.watch(_path_root + 'config.json', {
+//     ignored: /[\/\\]\./,
+//     persistent: true
+// });
+// watcher
+//     .on('add', function () {
+//         if (model.get('server:server:logs:config')) log.info('[config watcher] .on("add")');
+//         reloadConfig();
+//     })
+//     .on('change', function () {
+//         if (model.get('server:server:logs:config')) log.info('[config watcher] .on("change")');
+//         reloadConfig();
+//     });
 
 function saveConfig() {
     if (model.get('server:server:logs:config')) log.info('[config save] starting...');

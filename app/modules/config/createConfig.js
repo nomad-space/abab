@@ -10,7 +10,18 @@ var random = require('../random');
 var portfinder = require('portfinder');
 
 config.set('project_name', 'Abab.io', true, true);
-config.set('domain', 'abab.io', true, true);
+config.set('shema', 'http', true, true);
+config.set('domain', 'localhost:8000', true, true);
+
+config.set('server_path', '/', true, true);
+// config.set('server_path', '/service/', true, true); // nginx conf
+config.set('api_path', 'api/v2/', true, true);
+config.set('server:api:timeout', 30, true, true);
+
+
+config.set('server:session:name', random.str(5, 10), true, true);
+config.set('server:session:secret', random.str(12, 20), true, true);
+
 config.set('database:mongodb_url', 'mongodb://user:pass@127.0.0.1:27017/db_name', true, true);
 config.set('geth:host', 'http://127.0.0.1:8545', true, true);
 config.set('geth:lastBlockNumber', 1376000, true, true);
