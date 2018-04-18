@@ -335,7 +335,7 @@ var ABAB = {
         }
         setTimeout(updatePlugins, 100);
         if (!historyAdd)
-            history.pushState({}, "ABAB.io | " + page, "#" + page + '-' + tabPage);
+            history.pushState({}, "Nomad.space | " + page, "#" + page + '-' + tabPage);
         ractiveComponent['rootApp'].set('page', page);
     },
     auth_action: {

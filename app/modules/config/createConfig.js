@@ -9,7 +9,7 @@ var random = require('../random');
 
 var portfinder = require('portfinder');
 
-config.set('project_name', 'Abab.io', true, true);
+config.set('project_name', 'Nomad.space', true, true);
 config.set('shema', 'http', true, true);
 config.set('domain', 'localhost:8000', true, true);
 

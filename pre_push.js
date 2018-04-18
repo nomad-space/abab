@@ -9,16 +9,16 @@ var parser = new xml2js.Parser();
 var xml_string = fs.readFileSync("./web/config.xml");
 
 var nw_update_conf = {
-    "name": "Abab io",
+    "name": "Nomad space",
     "version": "0.0.2",
-    "author": "Abab io LLC <development@Abab.io>",
-    "manifestUrl": "https://Abab.io/Abab.io/web/appUpdate.json",
+    "author": "Nomad.space LLC <development@nomad.space>",
+    "manifestUrl": "https://nomad.space/nomad.space/web/appUpdate.json",
     "packages": {
         "mac": {
-            "url": "https://Abab.io/Abab.io/web/macos.zip"
+            "url": "https://nomad.space/nomad.space/web/macos.zip"
         },
         "win": {
-            "url": "https://Abab.io/Abab.io/web/updapp.zip"
+            "url": "https://nomad.space/nomad.space/web/updapp.zip"
         }
     }
 };

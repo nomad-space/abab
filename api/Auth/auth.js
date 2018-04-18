@@ -69,9 +69,9 @@ module.exports = (API, redis) => {
 
             }).then(function (document) {
                 mail.send(param.email,
-                    'Activate you account Abab.io',
-                    'Hi ' + document.email + ', You have successfully created an Abab.io account. To complete the process, activate your account. '+config.get('shema')+'://'+config.get('domain')+config.get('server_path')+config.get('api_path')+'/public_activate_email/?email=' + document.email + '&hash=' + document.activate_hash + ' If you have any questions about this email, contact us. https://abab.io/support Regards, The Abab team',
-                    'Hi ' + document.email + ', You have successfully created an Abab.io account. To complete the process, activate your account. <br>'+config.get('shema')+'://'+config.get('domain')+config.get('server_path')+config.get('api_path')+'public_activate_email/?email=' + document.email + '&hash=' + document.activate_hash + ' <br><br>If you have any questions about this email, contact us. <br>https://abab.io/support <br><br>Regards, The Abab team');
+                    'Activate you account Nomad.space',
+                    'Hi ' + document.email + ', You have successfully created an Nomad.space account. To complete the process, activate your account. '+config.get('shema')+'://'+config.get('domain')+config.get('server_path')+config.get('api_path')+'/public_activate_email/?email=' + document.email + '&hash=' + document.activate_hash + ' If you have any questions about this email, contact us. https://nomad.space/support Regards, The Nomad.space team',
+                    'Hi ' + document.email + ', You have successfully created an Nomad.space account. To complete the process, activate your account. <br>'+config.get('shema')+'://'+config.get('domain')+config.get('server_path')+config.get('api_path')+'public_activate_email/?email=' + document.email + '&hash=' + document.activate_hash + ' <br><br>If you have any questions about this email, contact us. <br>https://nomad.space/support <br><br>Regards, The Nomad.space team');
                 return {
                     user: document,
                     success: true
@@ -151,9 +151,9 @@ module.exports = (API, redis) => {
                 }, 1));
             if (!document.activate) {
                 mail.send(param.email,
-                    'Activate you account Abab.io',
-                    'Hi ' + document.email + ', You have successfully created an Abab.io account. To complete the process, activate your account. https://abab.io/api/v1/?method=public_activate_email&email=' + document.email + '&hash=' + document.activate_hash + ' If you have any questions about this email, contact us. https://abab.io/support Regards, The Abab team',
-                    'Hi ' + document.email + ', You have successfully created an Abab.io account. To complete the process, activate your account. <br>https://abab.io/api/v1/?method=public_activate_email&email=' + document.email + '&hash=' + document.activate_hash + ' <br><br>If you have any questions about this email, contact us. <br>https://abab.io/support <br><br>Regards, The Abab team');
+                    'Activate you account Nomad.space',
+                    'Hi ' + document.email + ', You have successfully created an Nomad.space account. To complete the process, activate your account. https://nomad.space/api/v1/?method=public_activate_email&email=' + document.email + '&hash=' + document.activate_hash + ' If you have any questions about this email, contact us. https://Nomad.space/support Regards, The Nomad.space team',
+                    'Hi ' + document.email + ', You have successfully created an Nomad.space account. To complete the process, activate your account. <br>https://nomad.space/api/v1/?method=public_activate_email&email=' + document.email + '&hash=' + document.activate_hash + ' <br><br>If you have any questions about this email, contact us. <br>https://Nomad.space/support <br><br>Regards, The Nomad.space team');
 
                 return Promise.reject(API.error.create('This account not activate. We resend the message for activate account', 'param', {
                     pos: 'api/auth.js(auth_email):#5',

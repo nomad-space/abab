@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.abab.io" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
-  <name>Abab.io</name>
-  <description>Abab.io: decentralized marketspace for accommodation rentals</description>
-  <author email="developers@abab.io" href="https://abab.io/">Abab.io LLC.</author>
-  <license href="https://abab.io/license">MIT</license>
+<widget id="com.Nomad.space" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+  <name>Nomad.space</name>
+  <description>Nomad.space: decentralized marketspace for accommodation rentals</description>
+  <author email="developers@nomad.space" href="https://nomad.space/">Nomad.space LLC.</author>
+  <license href="https://nomad.space/license">MIT</license>
   <content src="index.html"/>
 
 </widget>

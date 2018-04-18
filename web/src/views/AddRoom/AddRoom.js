@@ -141,7 +141,7 @@ ractiveComponent['reactive-AddRoomApp'].on('submitRoom', function () {
             confirmButtonText: 'Да',
             cancelButtonText: 'Нет',
             showCancelButton: true,
-            text: "Отправить обект [" + resAPI.room._id + "]в SmartContract (Abab.io)? ",
+            text: "Отправить обект [" + resAPI.room._id + "]в SmartContract (Nomad.space)? ",
             showLoaderOnConfirm: true,
             preConfirm: function () {
                 API('UpsertRoom', {_id: resAPI.room._id, status: 2}, false, function (resAPI) {

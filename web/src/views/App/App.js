@@ -129,7 +129,7 @@ ractiveComponent['rootApp'].on('auth_start', function () {
 
                 ABAB.auth(res);
                 $('#formModal').modal('hide');
-                return swal('Добро пожаловать на Abab.io', '', 'success');
+                return swal('Добро пожаловать на Nomad.space', '', 'success');
 
             } else {
                 return swal('Ошибка авторизации', res.error.message, 'error');

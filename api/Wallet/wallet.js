@@ -392,7 +392,7 @@ module.exports = (API, redis) => {
         title: 'Get / create a wallet ',
         group: nameGroupAPI,
 
-        description: 'Creates (if the address was not found in the database) or receives the data of the wallet (and also the balance) in the Ethereum system and adds the currency ABAB coin (Private Key, URL: Keystore File (UTC / JSON))',
+        description: 'Creates (if the address was not found in the database) or receives the data of the wallet (and also the balance) in the Ethereum system and adds the currency Nomad coin (Private Key, URL: Keystore File (UTC / JSON))',
         param: [
             {
                 name: 'type',

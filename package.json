@@ -1,7 +1,7 @@
 {
-  "name": "abab.io",
+  "name": "nomad.space",
   "version": "1.0.0",
-  "description": "Abab.io is a decentralized marketspace for accommodation rentals where a blockchain allows to reduce the commission and solves the issue of trust between the host and the guest by formalizing the rules of interaction in a smart contract and introducing a system for the validation of the identity and rating of the system user. ",
+  "description": "nomad.space is a decentralized marketspace for accommodation rentals where a blockchain allows to reduce the commission and solves the issue of trust between the host and the guest by formalizing the rules of interaction in a smart contract and introducing a system for the validation of the identity and rating of the system user. ",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/bodgan-medvedev/abab.git"
   },
   "keywords": [
-    "abab.io",
+    "nomad.space",
     "abab",
     "Token",
     "AbabCoin",
