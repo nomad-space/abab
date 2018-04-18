@@ -52,6 +52,26 @@ router.use('/', (req, res, next) => {
 
 });
 
+
+router.all('/activate/:hash/', (req, res) => {
+    let param = {...req.query, ...req.body, files: req.files};
+    return new Promise(resolve => {
+        if (!param.hash)
+            return resolve('Error activate.');
+
+        API.call('getOrder', {session: {auth: true}}, {id: param._order_id}, 'server')
+            .then(res => {
+                return resolve(res.data)
+            })
+            .catch(err => {
+                return resolve('Error activate.');
+            })
+    }).then(res=>{
+        res.redirect('/')
+    }).catch(err=>{
+        res.end(err);
+    })
+});
 router.get('/docs/', (req, res) => {
 
     let config_local = {

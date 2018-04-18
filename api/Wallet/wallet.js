@@ -250,17 +250,12 @@ module.exports = (API, redis) => {
                             return resolve(res)
                         }).catch(function (err) {
                             return reject(API.error.create(err.message, 'db', err, 10));
-
                         })
                     });
                 }).catch(function (err) {
                     return reject(API.error.create(err.message, 'db', err, 10));
-
-
                 });
             } else {
-
-
                 db.wallets.findOne({
                     "user": db.mongoose.Types.ObjectId(user._id),
                     "type": param.type,
@@ -309,8 +304,6 @@ module.exports = (API, redis) => {
                                     passwordKeystore: resultWallet.passwordKeystore
                                 }
                             }).save().then(function (res) {
-
-
                                 return resolve({
                                     user_id: res.user_id,
                                     active: res.active,
